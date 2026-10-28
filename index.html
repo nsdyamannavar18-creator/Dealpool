@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DealPool — Simple Group Buying</title>
+  <meta name="description" content="Join together to buy products and local services at lower group prices." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤝</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Clean, Minimal Header -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <div class="brand" onclick="switchView('explore')">
+        <span class="brand-icon">🤝</span>
+        <span class="brand-name">DealPool</span>
+      </div>
+
+      <!-- Location Selector (#8 Location-based pools) -->
+      <div class="location-picker">
+        <span class="loc-icon">📍</span>
+        <select id="hubSelect" onchange="changeLocationHub(this.value)" aria-label="Select Community Pool Location">
+          <option value="all">All Locations (Bangalore)</option>
+          <option value="koramangala">Koramangala (City Pool)</option>
+          <option value="iit-campus">IIT Campus (College Pool)</option>
+          <option value="prestige-apt">Prestige Apartments (Complex Pool)</option>
+          <option value="manyata-tech">Manyata Tech Park (Office Pool)</option>
+        </select>
+      </div>
+
+      <!-- Minimal 3-Tab Navigation -->
+      <nav class="nav-tabs">
+        <button class="nav-btn active" data-view="explore" onclick="switchView('explore')">
+          Explore Deals
+        </button>
+        <button class="nav-btn" data-view="my-pools" onclick="switchView('my-pools')">
+          My Pools <span class="badge-count" id="myPoolsCount">2</span>
+        </button>
+        <button class="nav-btn" data-view="seller" onclick="switchView('seller')">
+          Seller Dashboard
+        </button>
+      </nav>
+
+      <!-- Simple Wallet Display -->
+      <div class="wallet-chip" onclick="switchView('my-pools')" title="Refundable Wallet Balance">
+        <span>Wallet:</span>
+        <strong id="walletAmount">₹4,250</strong>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       VIEW 1: EXPLORE DEALS (CLEAN, UNCLUTTERED MARKETPLACE)
+  ====================================================================== -->
+  <main id="view-explore" class="page-view">
+    <div class="container">
+
+      <!-- Highlighted Top Search Bar -->
+      <section class="top-search-section">
+        <div class="highlighted-search-bar">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search for salon deals, wireless keypad, air fryer, or apartment pools..."
+            oninput="renderDeals()"
+          />
+          <button class="search-clear-btn" onclick="document.getElementById('searchInput').value=''; renderDeals();">
+            Search
+          </button>
+        </div>
+      </section>
+
+      <!-- Simple Minimal Hero Banner -->
+      <section class="minimal-hero">
+        <div>
+          <h1>Buy together. Save more.</h1>
+          <p>Pool orders with people nearby or on campus to unlock bulk discounts on products & local services.</p>
+        </div>
+        <div class="trust-pills">
+          <span>🪙 Join with a small refundable token</span>
+          <span>🛡️ 100% Auto-refund if minimum isn't met</span>
+        </div>
+      </section>
+
+      <!-- Clean Filter Bar -->
+      <section class="filter-bar">
+        <div class="segmented-tabs">
+          <button class="seg-btn active" data-type="all" onclick="setCategory('all')">All Deals</button>
+          <button class="seg-btn" data-type="service" onclick="setCategory('service')">💇‍♀️ Local Services</button>
+          <button class="seg-btn" data-type="product" onclick="setCategory('product')">📦 Products</button>
+          <button class="seg-btn" data-type="recommended" onclick="setCategory('recommended')">✨ Recommended for You</button>
+        </div>
+      </section>
+
+      <!-- Spacious 2-Column Deals Grid -->
+      <section class="deals-grid" id="dealsGrid">
+        <!-- Populated by JS -->
+      </section>
+
+    </div>
+  </main>
+
+  <!-- =====================================================================
+       VIEW 2: MY JOINED POOLS & AUTO-REFUND TRACKER
+  ====================================================================== -->
+  <main id="view-my-pools" class="page-view hidden">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2>My Joined Pools</h2>
+          <p>Track your token deposits, invite friends, or complete final payment once the group discount locks.</p>
+        </div>
+      </div>
+
+      <!-- Simple Auto-Refund Policy Note (#6) -->
+      <div class="info-banner">
+        <strong>🛡️ How Auto-Refund Works:</strong>
+        You pay a small token (e.g. ₹99) to join. You can leave anytime before the <em>Refundable Deadline</em> for an instant 100% refund. After the deadline, confirmed buyers get a payment window to pay the final discounted balance. If the seller's minimum target isn't met, everyone gets an automatic refund.
+      </div>
+
+      <div class="my-pools-stack" id="myPoolsList">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </main>
+
+  <!-- =====================================================================
+       VIEW 3: MINIMAL SELLER DASHBOARD (CREATE POOL WITH PICTURES & DETAILS)
+  ====================================================================== -->
+  <main id="view-seller" class="page-view hidden">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2>Seller Dashboard</h2>
+          <p>Create a new group pool with pictures and details, or manage your active listings.</p>
+        </div>
+        <div class="segmented-tabs">
+          <button class="seg-btn active" id="tabBtnCreatePool" onclick="switchSellerMainTab('create')">
+            ➕ Create / Edit Pool
+          </button>
+          <button class="seg-btn" id="tabBtnManagePools" onclick="switchSellerMainTab('manage')">
+            📋 Manage My Pools & Bookings
+          </button>
+        </div>
+      </div>
+
+      <!-- PANE 1: MINIMAL POOL CREATOR (PRODUCT OR SERVICE) -->
+      <div id="sellerCreatePane" class="seller-card">
+        <div class="card-header-row">
+          <div>
+            <h3 id="creatorFormHeading">Create a New Deal Pool</h3>
+            <p class="muted-text">Upload a picture or paste an image link, set your group prices, and publish.</p>
+          </div>
+
+          <!-- Switch between Product Pool vs Service Pool -->
+          <div class="segmented-tabs">
+            <button type="button" class="seg-btn active" id="typeBtnProduct" onclick="setCreatorType('product')">
+              📦 Product Pool
+            </button>
+            <button type="button" class="seg-btn" id="typeBtnService" onclick="setCreatorType('service')">
+              💇‍♀️ Service Pool (Salon/Local)
+            </button>
+          </div>
+        </div>
+
+        <form id="unifiedPoolForm" onsubmit="handleSavePoolForm(event)" class="clean-form">
+          <input type="hidden" id="editDealId" value="" />
+          <input type="hidden" id="editDealType" value="product" />
+
+          <!-- Step 1: Picture Upload & Live Preview -->
+          <div class="image-uploader-box">
+            <div class="image-preview-frame" onclick="document.getElementById('poolImageFile').click()" title="Click to upload picture from your device">
+              <img id="creatorImagePreview" src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80" alt="Preview" />
+            </div>
+            <div class="image-upload-controls">
+              <label style="font-weight:600;font-size:0.88rem;">📸 Product / Service Picture</label>
+              <p class="muted-text" style="font-size:0.8rem;margin-bottom:0.5rem;">
+                Upload an image from your computer or paste an image URL below.
+              </p>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+                <input type="file" id="poolImageFile" accept="image/*" class="hidden" onchange="handleImageFileUpload(event)" />
+                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('poolImageFile').click()">
+                  📁 Upload Photo from Device
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="useSamplePicture()">
+                  ✨ Use Sample Studio Photo
+                </button>
+              </div>
+              <input
+                type="text"
+                id="poolImageUrl"
+                placeholder="Or paste image URL (https://...)"
+                value="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"
+                oninput="updateCreatorImagePreview(this.value)"
+              />
+            </div>
+          </div>
+
+          <!-- Step 2: Basic Details -->
+          <div class="form-grid-2">
+            <div class="field">
+              <label id="lblTitle">Product Name</label>
+              <input type="text" id="poolTitle" required placeholder="e.g. Sony WH-1000XM5 Wireless Headphones" />
+            </div>
+            <div class="field">
+              <label id="lblBiz">Brand / Seller Name</label>
+              <input type="text" id="poolBiz" required placeholder="e.g. AudioHub Authorized Partner" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Description & Key Details</label>
+            <input type="text" id="poolDesc" required placeholder="Briefly describe what buyers get, warranty, or service inclusions..." />
+          </div>
+
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Key Highlights (Comma separated)</label>
+              <input type="text" id="poolHighlights" placeholder="e.g. 1 Year Warranty, Free Doorstep Delivery, Original Box" />
+            </div>
+            <div class="field">
+              <label>Community Location Hub (#8)</label>
+              <select id="poolHub">
+                <option value="koramangala">Koramangala (City Pool)</option>
+                <option value="iit-campus">IIT Campus (College Pool)</option>
+                <option value="prestige-apt">Prestige Apartments (Complex Pool)</option>
+                <option value="manyata-tech">Manyata Tech Park (Office Pool)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Step 3: Pricing & Pool Size -->
+          <div class="form-grid-3">
+            <div class="field">
+              <label>Regular Price (₹)</label>
+              <input type="number" id="poolRegPrice" required min="50" value="2500" />
+            </div>
+            <div class="field">
+              <label>Refundable Join Token (₹)</label>
+              <input type="number" id="poolToken" required min="10" value="150" />
+            </div>
+            <div class="field">
+              <label>Deal Deadline (Hours)</label>
+              <input type="number" id="poolHours" required min="1" value="24" />
+            </div>
+          </div>
+
+          <div class="form-grid-3">
+            <div class="field">
+              <label>Minimum Buyers Needed</label>
+              <input type="number" id="poolMin" required min="2" value="10" />
+            </div>
+            <div class="field">
+              <label>Maximum Pool Capacity</label>
+              <input type="number" id="poolMax" required min="2" value="20" />
+            </div>
+            <div class="field">
+              <label>Refundable Deadline (Hours)</label>
+              <input type="number" id="poolRefundHours" required min="1" value="12" title="Hours during which buyers can leave and get 100% token refund" />
+            </div>
+          </div>
+
+          <!-- PRODUCT-ONLY SECTION: Dynamic or Fixed Discount Tiers (#1) -->
+          <div id="creatorProductFields" class="slots-section">
+            <div class="card-header-row" style="margin-bottom:0.75rem;">
+              <label style="font-weight:600;">📊 Product Discount Mode</label>
+              <select id="poolPricingMode" class="clean-select" onchange="toggleCreatorPricingMode()">
+                <option value="dynamic">Dynamic Discount Tiers (1–9, 10–19, 20+)</option>
+                <option value="fixed">Fixed Group Price</option>
+              </select>
+            </div>
+
+            <div id="creatorDynamicTiers" class="form-grid-3">
+              <div class="field">
+                <label>1–9 Buyers Price (₹)</label>
+                <input type="number" id="poolTier1" value="1900" />
+              </div>
+              <div class="field">
+                <label>10–19 Buyers Price (₹)</label>
+                <input type="number" id="poolTier2" value="1750" />
+              </div>
+              <div class="field">
+                <label>20+ Buyers Price (₹)</label>
+                <input type="number" id="poolTier3" value="1600" />
+              </div>
+            </div>
+
+            <div id="creatorFixedTier" class="field hidden">
+              <label>Fixed Group Price per Buyer (₹)</label>
+              <input type="number" id="poolFixedPrice" value="1750" />
+            </div>
+          </div>
+
+          <!-- SERVICE-ONLY SECTION: Group Price, Duration, Location & Appointment Slots -->
+          <div id="creatorServiceFields" class="slots-section hidden">
+            <div class="form-grid-3" style="margin-bottom:1rem;">
+              <div class="field">
+                <label>Service Group Price (₹)</label>
+                <input type="number" id="poolServiceGroupPrice" value="799" />
+              </div>
+              <div class="field">
+                <label>Service Duration (Mins)</label>
+                <input type="number" id="poolServiceDuration" value="60" />
+              </div>
+              <div class="field">
+                <label>Max Bookings Per Slot</label>
+                <input type="number" id="poolMaxPerSlot" value="4" />
+              </div>
+            </div>
+
+            <div class="field" style="margin-bottom:1rem;">
+              <label>Service Location & Distance</label>
+              <input type="text" id="poolServiceLocation" value="Koramangala • 1.2 km away" placeholder="e.g. Koramangala • 1.2 km away" />
+            </div>
+
+            <div class="card-header-row" style="margin-bottom:0.5rem;">
+              <label style="font-weight:600;">📅 Available Appointment Dates & Time Slots</label>
+              <button type="button" class="btn btn-outline btn-sm" onclick="addCreatorSlotRow()">+ Add Slot</button>
+            </div>
+            <div id="creatorSlotsList" class="slots-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <div class="form-footer" style="display:flex;gap:0.75rem;">
+            <button type="submit" class="btn btn-primary" id="submitPoolBtn">🚀 Publish Pool to Marketplace</button>
+            <button type="button" class="btn btn-outline" onclick="resetCreatorForm()">Reset Form</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- PANE 2: MANAGE ACTIVE POOLS, BOOKINGS, REVIEWS & APPROVALS -->
+      <div id="sellerManagePane" class="hidden">
+        <div class="seller-card" style="margin-bottom:1.25rem;">
+          <div class="card-header-row">
+            <div>
+              <h3>Select a Pool to Manage</h3>
+              <p class="muted-text">Approve buyer discounts, re-open vacancies, or check bookings and customer reviews.</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+              <select id="manageDealSelect" class="clean-select" onchange="renderManageDealDetails(this.value)">
+                <!-- Populated by JS -->
+              </select>
+              <button class="btn btn-outline btn-sm" onclick="loadDealIntoCreatorForEdit()">✏️ Edit This Deal</button>
+            </div>
+          </div>
+
+          <div id="manageDealSummaryBox">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- =====================================================================
+       CLEAN POPUP MODALS (ONLY SHOWN WHEN CLICKED)
+  ====================================================================== -->
+
+  <!-- Modal 1: Join Deal / Token Deposit / Waitlist -->
+  <div id="joinModal" class="modal-backdrop hidden" onclick="closeOnBackdrop(event, 'joinModal')">
+    <div class="modal-box">
+      <div class="modal-top">
+        <h3 id="joinModalTitle">Join Deal</h3>
+        <button class="close-btn" onclick="closeModal('joinModal')">✕</button>
+      </div>
+      <div id="joinModalContent"></div>
+    </div>
+  </div>
+
+  <!-- Modal 2: View Service Slots & Reviews ([ View Slots ] button) -->
+  <div id="slotsModal" class="modal-backdrop hidden" onclick="closeOnBackdrop(event, 'slotsModal')">
+    <div class="modal-box">
+      <div class="modal-top">
+        <h3 id="slotsModalTitle">Available Slots & Details</h3>
+        <button class="close-btn" onclick="closeModal('slotsModal')">✕</button>
+      </div>
+      <div id="slotsModalContent"></div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Invite Link & Social Share (#3 & #9) -->
+  <div id="shareModal" class="modal-backdrop hidden" onclick="closeOnBackdrop(event, 'shareModal')">
+    <div class="modal-box">
+      <div class="modal-top">
+        <h3 id="shareModalTitle">Invite Friends</h3>
+        <button class="close-btn" onclick="closeModal('shareModal')">✕</button>
+      </div>
+      <div id="shareModalContent"></div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Seller Trust Score Breakdown (#5) -->
+  <div id="trustModal" class="modal-backdrop hidden" onclick="closeOnBackdrop(event, 'trustModal')">
+    <div class="modal-box">
+      <div class="modal-top">
+        <h3 id="trustModalTitle">Seller Trust Score</h3>
+        <button class="close-btn" onclick="closeModal('trustModal')">✕</button>
+      </div>
+      <div id="trustModalContent"></div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Product / Service Full Details & Gallery Modal -->
+  <div id="productDetailsModal" class="modal-backdrop hidden" onclick="closeOnBackdrop(event, 'productDetailsModal')">
+    <div class="modal-box modal-box-wide">
+      <div class="modal-top">
+        <h3 id="productDetailsTitle">Product Details</h3>
+        <button class="close-btn" onclick="closeModal('productDetailsModal')">✕</button>
+      </div>
+      <div id="productDetailsContent"></div>
+    </div>
+  </div>
+
+  <!-- Minimal Toast Notification -->
+  <div id="toastBox" class="toast-box"></div>
+
+  <!-- Payment & Cancellation Animation Overlay -->
+  <div id="actionAnimOverlay" class="anim-overlay hidden">
+    <div id="actionAnimCard" class="anim-card">
+      <div id="actionAnimIconWrap" class="anim-icon-wrap"></div>
+      <h3 id="actionAnimTitle" class="anim-title">Processing...</h3>
+      <p id="actionAnimSub" class="anim-sub"></p>
+      <div id="actionAnimAmount" class="anim-amount"></div>
+      <div id="confettiContainer" class="confetti-container"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
